@@ -55,12 +55,18 @@ compounds = {
     },
 }
 
+-- there must be some more robust way to script agents than having stuff all over the place.
+function oxytoxyEffect(entityId, potency)
+    Microbe(Entity(entityId)):damage(potency*15, "toxin")
+end
+
 agents = {
     oxytoxy = {
         name = "OxyToxy NT",
+        weight = 1,
         mesh = "oxytoxy.mesh",
         size = 0.3,
-        effect = "oxytoxyEffect",
+        effect = oxytoxyEffect,
         --[[
         we'll have to be careful with this referencing. 
         should we link the function directly? Or just name? 

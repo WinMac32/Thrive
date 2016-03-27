@@ -17,6 +17,7 @@ BioProcessRegistry::luaBindings() {
         .scope
         [
             def("loadFromXML", &BioProcessRegistry::loadFromXML),
+            def("loadFromLua", &BioProcessRegistry::loadFromLua),
             //def("registerBioProcess", &BioProcessRegistry::registerBioProcess),
             def("getDisplayName", &BioProcessRegistry::getDisplayName),
             def("getInternalName", &BioProcessRegistry::getInternalName),
@@ -67,9 +68,9 @@ BioProcessRegistry::loadFromXML(
     TiXmlDocument doc(filename.c_str());
     bool loadOkay = doc.LoadFile();
     if (loadOkay)
-	{
-	    // Handles used for null-safety
-		TiXmlHandle hDoc(&doc),
+    {
+        // Handles used for null-safety
+        TiXmlHandle hDoc(&doc),
                     hProcesses(0),
                     hCompounds(0);
         // Elements used for iteration
@@ -77,14 +78,14 @@ BioProcessRegistry::loadFromXML(
                      * pCompound;
 
         hProcesses=hDoc.FirstChildElement("Processes");
-		pProcess=hProcesses.FirstChild( "Process" ).Element();
+        pProcess=hProcesses.FirstChild( "Process" ).Element();
         while (pProcess)
-		{
-		    std::vector<std::pair<CompoundId, int>> inputs;
-		    std::vector<std::pair<CompoundId, int>> outputs;
-		    const char* compoundName; //Char pointer for null-checks
+        {
+            std::vector<std::pair<CompoundId, int>> inputs;
+            std::vector<std::pair<CompoundId, int>> outputs;
+            const char* compoundName; //Char pointer for null-checks
             int compoundAmount;
-		    hCompounds = TiXmlHandle(pProcess->FirstChildElement("Inputs"));
+            hCompounds = TiXmlHandle(pProcess->FirstChildElement("Inputs"));
             pCompound=hCompounds.FirstChildElement( "Input" ).Element();
             while (pCompound)
             {
@@ -134,11 +135,50 @@ BioProcessRegistry::loadFromXML(
                std::move(outputs)
             );
             pProcess=pProcess->NextSiblingElement("Process");
-		}
-	}
-	else {
-		throw std::invalid_argument(doc.ErrorDesc());
-	}
+        }
+    }
+    else {
+        throw std::invalid_argument(doc.ErrorDesc());
+    }
+}
+
+void
+BioProcessRegistry::loadFromLua(
+    const luabind::object& processTable
+    )
+{
+    for (luabind::iterator i(processTable), end; i != end; ++i) {
+        std::string key = luabind::object_cast<std::string>(i.key());
+        luabind::object data = *i;
+
+        float speedFactor = luabind::object_cast<float>(data["speedFactor"]);
+        float energyCost = luabind::object_cast<float>(data["energyCost"]);
+        luabind::object inputTable = data["inputs"];
+        luabind::object outputTable = data["outputs"];
+        std::vector<std::pair<CompoundId, int>> inputs;
+        std::vector<std::pair<CompoundId, int>> outputs;
+
+        for (luabind::iterator ii(inputTable), end; ii != end; ++ii) {
+            std::string compound = luabind::object_cast<std::string>(ii.key());
+            float amount = luabind::object_cast<float>(*ii);
+            inputs.push_back({CompoundRegistry::getCompoundId(compound), amount});
+        }
+
+        for (luabind::iterator oi(outputTable), end; oi != end; ++oi) {
+            std::string compound = luabind::object_cast<std::string>(oi.key());
+            float amount = luabind::object_cast<float>(*oi);
+            inputs.push_back({CompoundRegistry::getCompoundId(compound), amount});
+        }
+
+        registerBioProcess(
+               key,
+               key,
+               energyCost,
+               speedFactor,
+               std::move(inputs),
+               std::move(outputs)
+            );
+    }
 }
 
 
@@ -155,7 +195,7 @@ BioProcessRegistry::registerBioProcess(
         BioProcessEntry entry;
         entry.internalName = internalName;
         entry.displayName = displayName;
-		entry.energyCost = energyCost;
+        entry.energyCost = energyCost;
         entry.speedFactor = speedFactor;
         entry.inputCompounds = inputCompounds;
         entry.outputCompounds = outputCompounds;

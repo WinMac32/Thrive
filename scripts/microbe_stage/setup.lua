@@ -35,13 +35,9 @@ local function setupCamera()
     workspaceEntity:addComponent(workspaceComponent)
 end
 
--- there must be some more robust way to script agents than having stuff all over the place.
-function oxytoxyEffect(entityId, potency)
-    Microbe(Entity(entityId)):damage(potency*15, "toxin")
-end
-
 local function setupCompounds()
-    CompoundRegistry.loadFromXML("../scripts/definitions/compounds.xml")
+    CompoundRegistry.loadFromLua(compounds, agents)
+    --CompoundRegistry.loadFromXML("../scripts/definitions/compounds.xml")
 end
 
 local function setupCompoundClouds()
@@ -79,7 +75,8 @@ end
 --  This isn't a finished solution. Optimally the process class would be moved to CPP and loaded there entirely.
 global_processMap = {}
 local function setupProcesses()
-    BioProcessRegistry.loadFromXML("../scripts/definitions/processes.xml")
+    -- BioProcessRegistry.loadFromXML("../scripts/definitions/processes.xml")
+    BioProcessRegistry.loadFromLua(processes)
     for processId in BioProcessRegistry.getList() do
         local inputCompounds = {}
         local outputCompounds = {}

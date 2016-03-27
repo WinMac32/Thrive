@@ -626,7 +626,7 @@ end
 -- @returns amount
 -- The amount that was actually taken, between 0.0 and maxAmount.
 function Microbe:takeCompound(compoundId, maxAmount)
-    if self.microbe.specialStorageOrganelles[compoundId] == nil then
+    --if self.microbe.specialStorageOrganelles[compoundId] == nil then
         if self.microbe.compounds[compoundId] == nil then
             return 0
         else
@@ -635,9 +635,9 @@ function Microbe:takeCompound(compoundId, maxAmount)
             self.microbe.stored = self.microbe.stored - takenAmount
             return takenAmount
         end
-    else
-        return self.microbe.specialStorageOrganelles:takeCompound(compoundId, maxAmount)
-    end
+    --else
+        --return self.microbe.specialStorageOrganelles:takeCompound(compoundId, maxAmount)
+    --end
     self.microbe:_updateCompoundPriorities()
 end
 
@@ -908,7 +908,7 @@ function Microbe:respawn()
     )
     local sceneNode = self.entity:getComponent(OgreSceneNodeComponent.TYPE_ID)
     sceneNode.visible = true
-    self:storeCompound(CompoundRegistry.getCompoundId("atp"), 20, false)
+    self:storeCompound(CompoundRegistry.getCompoundId("atp"), 50, false)
 end
 
 -- Private function for initializing a microbe's components

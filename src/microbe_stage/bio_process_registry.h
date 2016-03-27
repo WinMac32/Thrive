@@ -49,6 +49,11 @@ public:
         const std::string& filename
     );
 
+    static void
+    loadFromLua(
+        const luabind::object& processTable
+    );
+
     /**
     * @brief Registers a new process type
     *

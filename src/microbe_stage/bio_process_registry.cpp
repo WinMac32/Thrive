@@ -167,7 +167,7 @@ BioProcessRegistry::loadFromLua(
         for (luabind::iterator oi(outputTable), end; oi != end; ++oi) {
             std::string compound = luabind::object_cast<std::string>(oi.key());
             float amount = luabind::object_cast<float>(*oi);
-            inputs.push_back({CompoundRegistry::getCompoundId(compound), amount});
+            outputs.push_back({CompoundRegistry::getCompoundId(compound), amount});
         }
 
         registerBioProcess(

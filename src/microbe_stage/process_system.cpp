@@ -55,7 +55,9 @@ CompoundBagComponent::luaBindings() {
             value("TYPE_ID", CompoundBagComponent::TYPE_ID)
         ]
         .scope [
-            def("TYPE_NAME", &CompoundBagComponent::TYPE_NAME)
+            def("TYPE_NAME", &CompoundBagComponent::TYPE_NAME),
+            def("giveCompound", &CompoundBagComponent::giveCompound),
+            def("takeCompound", &CompoundBagComponent::takeCompound)
         ]
         .def(constructor<>())
     ;
@@ -74,10 +76,24 @@ CompoundBagComponent::storage() const
     return storage;
 }
 
+// helper methods for integrating compound bags with current, un-refactored, lua microbes
+void
+CompoundBagComponent::giveCompound(CompoundId id, float amt) {
+    compounds[id] += amt;
+}
+
+float
+CompoundBagComponent::takeCompound(CompoundId id, float to_take) {
+    float& ref = compounds[id];
+    float amt = ref > to_take ? to_take : ref;
+    ref -= amt;
+    return amt;
+}
+
 luabind::scope
 ProcessSystem::luaBindings() {
     using namespace luabind;
-    return class_<ProcessSystem, System>("ProcessSystem")
+    return class_<ProcessSystem, System>("ProcessorSystem")
         .def(constructor<>())
     ;
 }
@@ -122,19 +138,19 @@ ProcessSystem::shutdown()
 }
 
 void
-ProcessSystem::Implementation::updateRemovedEntities(int logicTime) {
-    std::cerr << logicTime;
-    for (EntityId entityId : this->m_entities.removedEntities()) {
-        std::cerr << &entityId;
-    }
+ProcessSystem::Implementation::updateRemovedEntities(int) {
+    // std::cerr << logicTime;
+    // for (EntityId entityId : this->m_entities.removedEntities()) {
+        // std::cerr << &entityId;
+    // }
 }
 
 void
-ProcessSystem::Implementation::updateAddedEntites(int logicTime) {
-    std::cerr << logicTime;
-    for (auto& value : this->m_entities.addedEntities()) {
-        std::cerr << &value;
-    }
+ProcessSystem::Implementation::updateAddedEntites(int) {
+    // std::cerr << logicTime;
+    // for (auto& value : this->m_entities.addedEntities()) {
+        // std::cerr << &value;
+    // }
 }
 
 /*

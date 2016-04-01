@@ -52,6 +52,12 @@ public:
 
     ProcessorComponent* processor;
     std::unordered_map<CompoundId, float> compounds;
+
+    float
+    takeCompound(CompoundId, float); // remove up to a certain amount of compound, returning how much was removed
+
+    void
+    giveCompound(CompoundId, float);
 };
 
 class ProcessSystem : public System {

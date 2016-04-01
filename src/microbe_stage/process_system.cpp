@@ -77,6 +77,11 @@ CompoundBagComponent::storage() const
 }
 
 // helper methods for integrating compound bags with current, un-refactored, lua microbes
+float
+CompoundBagComponent::getCompoundAmount(CompoundId id) {
+    return compounds[id];
+}
+
 void
 CompoundBagComponent::giveCompound(CompoundId id, float amt) {
     compounds[id] += amt;

@@ -261,6 +261,7 @@ function Microbe.createMicrobeEntity(name, aiControlled, speciesName)
     local components = {
         CompoundAbsorberComponent(),
         OgreSceneNodeComponent(),
+        CompoundBagComponent(),
         MicrobeComponent(not aiControlled, speciesName),
         reactionHandler,
         rigidBody,
@@ -289,6 +290,7 @@ Microbe.COMPONENTS = {
     collisionHandler = CollisionComponent.TYPE_ID,
     soundSource = SoundSourceComponent.TYPE_ID,
     membraneComponent = MembraneComponent.TYPE_ID,
+    compoundBag = CompoundBagComponent.TYPE_ID,
 }
 
 
@@ -486,6 +488,8 @@ end
 -- @returns amount
 -- The amount stored in the microbe's storage oraganelles
 function Microbe:getCompoundAmount(compoundId)
+    return self.entity:getComponent(CompoundBagComponent.TYPE_ID):getCompoundAmount(compoundId)
+    --[[
     if self.microbe.specialStorageOrganelles[compoundId] == nil then
         if self.microbe.compounds[compoundId] == nil then
             return 0
@@ -494,7 +498,7 @@ function Microbe:getCompoundAmount(compoundId)
         end
     else
         return self.microbe.specialStorageOrganelles[compoundId].storedAmount
-    end
+    end]]
 end
 
 -- Sets the default compound priorities
@@ -589,11 +593,12 @@ function Microbe:storeCompound(compoundId, amount, bandwidthLimited)
         storedAmount = amount
     end
     storedAmount = math.min(storedAmount , self.microbe.capacity - self.microbe.stored)
-    if self.microbe.specialStorageOrganelles[compoundId] == nil then
-        if self.microbe.compounds[compoundId] == nil then
-            self.microbe.compounds[compoundId] = 0
-        end
-        self.microbe.compounds[compoundId] = self.microbe.compounds[compoundId] + storedAmount
+    --if self.microbe.specialStorageOrganelles[compoundId] == nil then
+        --if self.microbe.compounds[compoundId] == nil then
+        --    self.microbe.compounds[compoundId] = 0
+        --end
+        -- self.microbe.compounds[compoundId] = self.microbe.compounds[compoundId] + storedAmount
+        self.entity:getComponent(CompoundBagComponent.TYPE_ID):giveCompound(compoundId, storedAmount)
         self.microbe.stored = self.microbe.stored + storedAmount
         local remainingAmount = amount - storedAmount
         -- If there is excess compounds, we will eject them
@@ -608,9 +613,9 @@ function Microbe:storeCompound(compoundId, amount, bandwidthLimited)
                 self:ejectCompound(compoundId, remainingAmount/particleCount, 160, 200)
             end
         end
-    else
-        self.microbe.specialStorageOrganelles[compoundId]:storeCompound(compoundId, storedAmount)
-    end
+    --else
+      --  self.microbe.specialStorageOrganelles[compoundId]:storeCompound(compoundId, storedAmount)
+    --end
     self.microbe:_updateCompoundPriorities()
 end
 
@@ -627,6 +632,9 @@ end
 -- The amount that was actually taken, between 0.0 and maxAmount.
 function Microbe:takeCompound(compoundId, maxAmount)
     --if self.microbe.specialStorageOrganelles[compoundId] == nil then
+
+    return self.entity:getComponent(CompoundBagComponent.TYPE_ID):takeCompound(compoundId, maxAmount)
+--[[
         if self.microbe.compounds[compoundId] == nil then
             return 0
         else
@@ -638,6 +646,9 @@ function Microbe:takeCompound(compoundId, maxAmount)
     --else
         --return self.microbe.specialStorageOrganelles:takeCompound(compoundId, maxAmount)
     --end
+    --]]
+
+    -- is this code supposed to be dead?
     self.microbe:_updateCompoundPriorities()
 end
 

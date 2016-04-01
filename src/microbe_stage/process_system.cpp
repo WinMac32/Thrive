@@ -55,11 +55,12 @@ CompoundBagComponent::luaBindings() {
             value("TYPE_ID", CompoundBagComponent::TYPE_ID)
         ]
         .scope [
-            def("TYPE_NAME", &CompoundBagComponent::TYPE_NAME),
-            def("giveCompound", &CompoundBagComponent::giveCompound),
-            def("takeCompound", &CompoundBagComponent::takeCompound)
+            def("TYPE_NAME", &CompoundBagComponent::TYPE_NAME)
         ]
         .def(constructor<>())
+        .def("giveCompound", &CompoundBagComponent::giveCompound)
+        .def("takeCompound", &CompoundBagComponent::takeCompound)
+        .def("getCompoundAmount", &CompoundBagComponent::getCompoundAmount)
     ;
 }
 

@@ -649,7 +649,7 @@ function Microbe:takeCompound(compoundId, maxAmount)
     --]]
 
     -- is this code supposed to be dead?
-    self.microbe:_updateCompoundPriorities()
+    -- self.microbe:_updateCompoundPriorities()
 end
 
 

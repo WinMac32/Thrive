@@ -58,7 +58,7 @@ You are only one of the many that have evolved.
 
 
 Click to continue or press escape to skip the tutorial.]])
-        tutorial:setProperty("{{0,600},{0,260}}", "Size")
+        tutorial:setProperty("{{0,600},{0,280}}", "Size")
     elseif self.tutorialStep == 1 then
         tutorial:setProperty("{{0, 200},{0, 200}}", "Position")
         tutorial:setText(
@@ -72,7 +72,7 @@ just like you. (Probably not in this release though.)
 
 
 Click to continue or press escape to skip the tutorial.]])
-        tutorial:setProperty("{{0,600},{0,220}}", "Size")
+        tutorial:setProperty("{{0,600},{0,240}}", "Size")
     elseif self.tutorialStep == 2 then
         tutorial:setProperty("{{0, 300},{0, 50}}", "Position")
         tutorial:setText(

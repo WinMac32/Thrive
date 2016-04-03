@@ -31,16 +31,11 @@ function NucleusOrganelle:onAddedToMicrobe(microbe, q, r, rotation)
 	local sceneNode2 = OgreSceneNodeComponent()
     sceneNode2.meshName = "ER.mesh"
 	sceneNode2.parent = microbe:getOrganelleAt(q,r).entity
-	local x1, y1 = axialToCartesian(q, r-2)
-    local x2, y2 = axialToCartesian(q, r-1)
-	local x3, y3 = axialToCartesian(q+1, r-2)
-	x = (x1+x2+x2+x3)/4
-	y = (y1+y2+y2+y3)/4
-	sceneNode2.transform.position = Vector3(x,y,0)
+	sceneNode2.transform.position = Vector3(0,0,0)
     --sceneNode2:playAnimation("Drift", true)
     --sceneNode2:setAnimationSpeed(0.1)
     sceneNode2.transform.scale = Vector3(1, 1, 1)
-    sceneNode2.transform.orientation = Quaternion(Radian(Degree(rotation)), Vector3(0, 0, 1))
+    sceneNode2.transform.orientation = Quaternion(Radian(Degree(rotation+5)), Vector3(0, 0, 1))
     sceneNode2.transform:touch()
     microbe.entity:addChild(self.ER)
     self.ER:addComponent(sceneNode2)

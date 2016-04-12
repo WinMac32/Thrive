@@ -33,6 +33,11 @@ public:
 
     std::unordered_map<BioProcessId, float> process_capacities;
     std::unordered_map<CompoundId, std::pair<float, float>> thresholds;
+
+    void
+    setThreshold(CompoundId, float, float);
+    void
+    setCapacity(CompoundId, float);
 };
 
 class CompoundBagComponent : public Component {

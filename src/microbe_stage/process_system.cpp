@@ -27,6 +27,8 @@ ProcessorComponent::luaBindings() {
             def("TYPE_NAME", &ProcessorComponent::TYPE_NAME)
         ]
         .def(constructor<>())
+        .def("setThreshold", &ProcessorComponent::setThreshold)
+        .def("setCapacity", &ProcessorComponent::setCapacity)
     ;
 }
 
@@ -43,7 +45,19 @@ ProcessorComponent::storage() const
     StorageContainer storage = Component::storage();
     //storage.set<float>("potency", m_potency);
     return storage;
-};
+}
+
+void
+ProcessorComponent::setThreshold(CompoundId id, float low, float high)
+{
+    this->thresholds[id] = std::pair<float, float>(low, high);
+}
+
+void
+ProcessorComponent::setCapacity(BioProcessId id, float capacity)
+{
+    this->process_capacities[id] = capacity;
+}
 
 REGISTER_COMPONENT(CompoundBagComponent)
 

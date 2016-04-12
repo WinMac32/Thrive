@@ -110,10 +110,13 @@ function setupSpecies()
         speciesComponent = SpeciesComponent(name)
         speciesEntity:addComponent(speciesComponent)
         speciesComponent.organelles = data.organelles -- note, shallow assignment
+        processorComponent = ProcessorComponent()
+        speciesEntity:addComponent(processorComponent)
         speciesComponent.colour = Vector3(data.colour.r, data.colour.g, data.colour.b)
 
         -- iterates over all compounds, and sets amounts and priorities
         for compoundID in CompoundRegistry.getCompoundList() do
+            processorComponent:setThreshold(compoundID, 10, 50)
             compound = CompoundRegistry.getCompoundInternalName(compoundID)
             compoundData = data.compounds[compound]
             if compoundData ~= nil then

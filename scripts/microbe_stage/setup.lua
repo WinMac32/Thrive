@@ -116,7 +116,7 @@ function setupSpecies()
 
         -- iterates over all compounds, and sets amounts and priorities
         for compoundID in CompoundRegistry.getCompoundList() do
-            processorComponent:setThreshold(compoundID, 10, 50)
+            processorComponent:setThreshold(compoundID, 10, 50) -- we'll need to code up sensible defaults, of course
             compound = CompoundRegistry.getCompoundInternalName(compoundID)
             compoundData = data.compounds[compound]
             if compoundData ~= nil then

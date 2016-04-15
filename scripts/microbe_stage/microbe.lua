@@ -652,7 +652,6 @@ function Microbe:takeCompound(compoundId, maxAmount)
     -- self.microbe:_updateCompoundPriorities()
 end
 
-
 -- Ejects compounds from the microbes behind position, into the enviroment
 -- Note that the compounds ejected are created in this function and not taken from the microbe
 --
@@ -694,8 +693,8 @@ end
 -- Kills the microbe, releasing stored compounds into the enviroment
 function Microbe:kill()
     -- Eject the compounds that was in the microbe
-    for compoundId,amount in pairs(self.microbe.compounds) do
-        local _amount = amount
+    for compoundId,_ in pairs(compounds) do
+        local _amount = self:getCompoundAmount(compoundId)
         while _amount > 0 do
             ejectedAmount = self:takeCompound(compoundId, 2.5) -- Eject up to 3 units per particle
             self:ejectCompound(compoundId, ejectedAmount, 0, 359)
@@ -761,9 +760,9 @@ function Microbe:toggleEngulfMode()
         colourToSet = ColourValue.Red
         self.microbe.movementFactor = self.microbe.movementFactor / ENGULFING_MOVEMENT_DIVISION
     end
-	-- You should be able to get the membrane to flash blue (or become some color)
-	-- if you are able to get your hands on the membrane entity, which is currently defined in c++
-	-- below line is just an example—it doesn't actually work.
+    -- You should be able to get the membrane to flash blue (or become some color)
+    -- if you are able to get your hands on the membrane entity, which is currently defined in c++
+    -- below line is just an example—it doesn't actually work.
     -- microbe.membraneComponent.entity:flashColour(3000, ColourValue(1,0.2,0.2,1))
     self.microbe.engulfMode = not self.microbe.engulfMode
 end
@@ -839,18 +838,18 @@ function Microbe:update(logicTime)
             else
                 self:destroy()
             end
-		end
-	end
-	-- Membrane
-	self.sceneNode.meshName = "membrane_" .. self.microbe.speciesName 
-	for _, organelle in pairs(self.microbe.organelles) do
-		for _, hex in pairs(organelle._hexes) do
-			local q = hex.q + organelle.position.q
-			local r = hex.r + organelle.position.r
-			local x, y = axialToCartesian(q, r)
-			self.membraneComponent:sendOrganelles(x, y)
-		end
-	end
+        end
+    end
+    -- Membrane
+    self.sceneNode.meshName = "membrane_" .. self.microbe.speciesName
+    for _, organelle in pairs(self.microbe.organelles) do
+        for _, hex in pairs(organelle._hexes) do
+            local q = hex.q + organelle.position.q
+            local r = hex.r + organelle.position.r
+            local x, y = axialToCartesian(q, r)
+            self.membraneComponent:sendOrganelles(x, y)
+        end
+    end
 end
 
 function Microbe:purgeCompounds()
@@ -860,22 +859,26 @@ function Microbe:purgeCompounds()
         -- Find lowest priority compound type contained in the microbe
         local lowestPriorityId = nil
         local lowestPriority = math.huge
-        for compoundId,_ in pairs(self.microbe.compounds) do
-            assert(self.microbe.compoundPriorities[compoundId] ~= nil, "Compound priority table was missing compound")
-            if self.microbe.compoundPriorities[compoundId] < lowestPriority then
-                lowestPriority = self.microbe.compoundPriorities[compoundId]
-                lowestPriorityId = compoundId
+        for compoundId,_ in pairs(compounds) do
+            if self:getCompoundAmount(compoundId) > 0 then
+                assert(self.microbe.compoundPriorities[compoundId] ~= nil, "Compound priority table was missing compound")
+                if self.microbe.compoundPriorities[compoundId] < lowestPriority then
+                    lowestPriority = self.microbe.compoundPriorities[compoundId]
+                    lowestPriorityId = compoundId
+                end
             end
         end
         assert(lowestPriorityId ~= nil, "The microbe didn't seem to contain any compounds but was over the threshold")
-        assert(self.microbe.compounds[lowestPriorityId] ~= nil, "Microbe storage was over threshold but didn't have any valid compounds to expell")
+        -- assert(self.microbe.compounds[lowestPriorityId] ~= nil, "Microbe storage was over threshold but didn't have any valid compounds to expell")
 
-		local totalPriority = 0
-		for compoundId,_ in pairs(self.microbe.compounds) do
-			totalPriority = totalPriority + self.microbe.compoundPriorities[compoundId]
-		end
+        local totalPriority = 0
+        for compoundId,_ in pairs(compounds) do
+            if self:getCompoundAmount(compoundId) > 0 then
+                totalPriority = totalPriority + self.microbe.compoundPriorities[compoundId]
+            end
+        end
 
-		local dedicatedStorage = self.microbe.compoundPriorities[lowestPriorityId]/totalPriority*self.microbe.capacity*STORAGE_EJECTION_THRESHHOLD
+        local dedicatedStorage = self.microbe.compoundPriorities[lowestPriorityId]/totalPriority*self.microbe.capacity*STORAGE_EJECTION_THRESHHOLD
         excessCompounds[lowestPriorityId] = self:takeCompound(lowestPriorityId, self.microbe.compounds[lowestPriorityId]-dedicatedStorage)
     end
 
@@ -888,7 +891,7 @@ end
 
 function Microbe:atpDamage()
     -- Damage microbe if its too low on ATP
-    if self.microbe.compounds[CompoundRegistry.getCompoundId("atp")] ~= nil and self.microbe.compounds[CompoundRegistry.getCompoundId("atp")] < 1.0 then
+    if self:getCompoundAmount(CompoundRegistry.getCompoundId("atp")) < 1.0 then
         if self.microbe.isPlayerMicrobe and not self.playerAlreadyShownAtpDamage then
             self.playerAlreadyShownAtpDamage = true
             showMessage("No ATP hurts you!")
@@ -931,7 +934,7 @@ function Microbe:_initialize()
         local q = organelle.position.q
         local r = organelle.position.r
         local x, y = axialToCartesian(q, r)
-		local rotation = organelle.rotation
+        local rotation = organelle.rotation
         local translation = Vector3(x, y, 0)
         -- Collision shape
         self.rigidBody.properties.shape:addChildShape(
@@ -981,10 +984,10 @@ end
 
 -- Must exists for current spawningSystem to function, also used by microbe:kill
 function Microbe:destroy()
-	for _, organelle in pairs(self.microbe.organelles) do
-		organelle:destroy()
-	end
-	self.entity:destroy()
+    for _, organelle in pairs(self.microbe.organelles) do
+        organelle:destroy()
+    end
+    self.entity:destroy()
 end
 
 -- The last two functions are only present since the spawn system expects an entity interface.

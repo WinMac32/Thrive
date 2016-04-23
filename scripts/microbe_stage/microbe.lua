@@ -183,11 +183,13 @@ function MicrobeComponent:storage()
     storage:set("isPlayerMicrobe", self.isPlayerMicrobe)
     storage:set("speciesName", self.speciesName)
     local storedCompounds = StorageList()
-    for compoundId, amount in pairs(self.compounds) do
-        compound = StorageContainer()
-        compound:set("compoundId", compoundId)
-        compound:set("amount", amount)
-        storedCompounds:append(compound)
+    for compoundId in CompoundRegistry.getCompoundList() do
+        if self:getCompoundAmount(compoundId) > 0 then
+            compound = StorageContainer()
+            compound:set("compoundId", compoundId)
+            compound:set("amount", amount)
+            storedCompounds:append(compound)
+        end
     end
     storage:set("storedCompounds", storedCompounds)
     local compoundPriorities = StorageList()
@@ -693,7 +695,7 @@ end
 -- Kills the microbe, releasing stored compounds into the enviroment
 function Microbe:kill()
     -- Eject the compounds that was in the microbe
-    for compoundId,_ in pairs(compounds) do
+    for compoundId in CompoundRegistry.getCompoundList() do
         local _amount = self:getCompoundAmount(compoundId)
         while _amount > 0 do
             ejectedAmount = self:takeCompound(compoundId, 2.5) -- Eject up to 3 units per particle
@@ -859,7 +861,7 @@ function Microbe:purgeCompounds()
         -- Find lowest priority compound type contained in the microbe
         local lowestPriorityId = nil
         local lowestPriority = math.huge
-        for compoundId,_ in pairs(compounds) do
+        for compoundId in CompoundRegistry.getCompoundList() do
             if self:getCompoundAmount(compoundId) > 0 then
                 assert(self.microbe.compoundPriorities[compoundId] ~= nil, "Compound priority table was missing compound")
                 if self.microbe.compoundPriorities[compoundId] < lowestPriority then
@@ -872,7 +874,7 @@ function Microbe:purgeCompounds()
         -- assert(self.microbe.compounds[lowestPriorityId] ~= nil, "Microbe storage was over threshold but didn't have any valid compounds to expell")
 
         local totalPriority = 0
-        for compoundId,_ in pairs(compounds) do
+        for compoundId in CompoundRegistry.getCompoundList() do
             if self:getCompoundAmount(compoundId) > 0 then
                 totalPriority = totalPriority + self.microbe.compoundPriorities[compoundId]
             end
@@ -902,8 +904,8 @@ end
 
 function Microbe:attemptReproduce()
     -- Split microbe if it has enough reproductase
-    if self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] ~= nil and self.microbe.compounds[CompoundRegistry.getCompoundId("reproductase")] > REPRODUCTASE_TO_SPLIT then
-        self:takeCompound(CompoundRegistry.getCompoundId("reproductase"), 5)
+    if self:getCompoundAmount(CompoundRegistry.getCompoundId("reproductase")) > REPRODUCTASE_TO_SPLIT then
+        self:takeCompound(CompoundRegistry.getCompoundId("reproductase"), REPRODUCTASE_TO_SPLIT)
         self:reproduce()
     end
 end

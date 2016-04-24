@@ -143,6 +143,7 @@ function microbeSpawnFunctionGeneric(pos, speciesName, aiControlled, individualN
     -- set organelles, starting compound amounts, all that
     -- TODO: 
     Entity(speciesName):getComponent(SpeciesComponent.TYPE_ID):template(microbe)
+    microbe.compoundBag:setProcessor(Entity(speciesName):getComponent(ProcessorComponent.TYPE_ID))
     return microbe
 end
 
@@ -380,6 +381,7 @@ local function createMicrobeStage(name)
             TimedLifeSystem(),
             CompoundMovementSystem(),
             CompoundAbsorberSystem(),
+            ProcessSystem(),
             --PopulationSystem(),
             PatchSystem(),
             SpeciesSystem(),

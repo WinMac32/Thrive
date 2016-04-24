@@ -72,6 +72,7 @@ CompoundBagComponent::luaBindings() {
             def("TYPE_NAME", &CompoundBagComponent::TYPE_NAME)
         ]
         .def(constructor<>())
+        .def("setProcessor", &CompoundBagComponent::setProcessor)
         .def("giveCompound", &CompoundBagComponent::giveCompound)
         .def("takeCompound", &CompoundBagComponent::takeCompound)
         .def("getCompoundAmount", &CompoundBagComponent::getCompoundAmount)
@@ -89,6 +90,11 @@ CompoundBagComponent::storage() const
 {
     StorageContainer storage = Component::storage();
     return storage;
+}
+
+void
+CompoundBagComponent::setProcessor(ProcessorComponent& processor) {
+    this->processor = &processor;
 }
 
 // helper methods for integrating compound bags with current, un-refactored, lua microbes
@@ -113,7 +119,7 @@ CompoundBagComponent::takeCompound(CompoundId id, float to_take) {
 luabind::scope
 ProcessSystem::luaBindings() {
     using namespace luabind;
-    return class_<ProcessSystem, System>("ProcessorSystem")
+    return class_<ProcessSystem, System>("ProcessSystem")
         .def(constructor<>())
     ;
 }

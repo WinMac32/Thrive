@@ -635,7 +635,9 @@ end
 function Microbe:takeCompound(compoundId, maxAmount)
     --if self.microbe.specialStorageOrganelles[compoundId] == nil then
 
-    return self.entity:getComponent(CompoundBagComponent.TYPE_ID):takeCompound(compoundId, maxAmount)
+    local takenAmount = self.entity:getComponent(CompoundBagComponent.TYPE_ID):takeCompound(compoundId, maxAmount)
+    self.microbe.stored = self.microbe.stored - takenAmount
+    return takenAmount
 --[[
         if self.microbe.compounds[compoundId] == nil then
             return 0

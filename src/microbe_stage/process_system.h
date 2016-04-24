@@ -58,6 +58,9 @@ public:
     ProcessorComponent* processor;
     std::unordered_map<CompoundId, float> compounds;
 
+    void
+    setProcessor(ProcessorComponent& processor);
+
     float
     getCompoundAmount(CompoundId);
     

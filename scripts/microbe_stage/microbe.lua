@@ -766,6 +766,7 @@ end
 function Microbe:reproduce()
     copy = Microbe.createMicrobeEntity(nil, true)
     self:getSpeciesComponent():template(copy)
+    copy.compoundBag:setProcessor(Entity(self.microbe.speciesName):getComponent(ProcessorComponent.TYPE_ID))
     copy.rigidBody.dynamicProperties.position = Vector3(self.rigidBody.dynamicProperties.position.x, self.rigidBody.dynamicProperties.position.y, 0)
     copy:storeCompound(CompoundRegistry.getCompoundId("atp"), 20, false)
     copy.microbe:_resetCompoundPriorities()  

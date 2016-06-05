@@ -170,10 +170,24 @@ local function setSpawnablePhysics(entity, pos, mesh, scale, collisionShape)
     return entity
 end
 
-function createCompoundCloud(compound, x, y, amount)
-    if compound == "aminoacids" or compound == "glucose" or compound == "co2" or compound == "oxygen" or compound == "ammonia" then
-        Entity("compound_cloud_" .. compound):getComponent(CompoundCloudComponent.TYPE_ID):addCloud(amount, x, y)
+function createCompoundCloud(compoundName, x, y, amount)
+    if compoundName == "aminoacids" or compoundName == "glucose" or compoundName == "co2" or compoundName == "oxygen" or compoundName == "ammonia" then
+        Entity("compound_cloud_" .. compoundName):getComponent(CompoundCloudComponent.TYPE_ID):addCloud(amount, x, y)
     end
+end
+
+function createAgentCloud(compoundId, x, y, direction, amount)
+    local entity = Entity()
+    local sceneNode = OgreSceneNodeComponent()
+    sceneNode.meshName = "oxytoxy.mesh"
+    sceneNode.transform.position = Vector3(x + direction.x/2, y + direction.y/2, 0)
+    sceneNode.transform:touch()
+    local agent = AgentCloudComponent()
+    agent:initialize(compoundId, 255, 0, 255)
+    agent.direction = direction*2
+    agent.potency = amount
+    entity:addComponent(sceneNode)
+    entity:addComponent(agent)
 end
 
 local function addEmitter2Entity(entity, compound)
@@ -313,7 +327,7 @@ function unlockChloroplast(entityId)
 end
 
 local function setupPlayer()
-    microbe = microbeSpawnFunctionGeneric(nil, "Default", false, PLAYER_NAME)
+    local microbe = microbeSpawnFunctionGeneric(nil, "Default", false, PLAYER_NAME)
     microbe.collisionHandler:addCollisionGroup("powerupable")
     Engine:playerData():lockedMap():addLock("Toxin")
     Engine:playerData():lockedMap():addLock("chloroplast")
@@ -330,7 +344,7 @@ local function setupSound()
     local soundSource = SoundSourceComponent()
     soundSource.ambientSoundSource = true
     soundSource.autoLoop = true
-    soundSource.volumeMultiplier = 0.5
+    soundSource.volumeMultiplier = 0.3
     ambientEntity:addComponent(soundSource)
     -- Sound
     soundSource:addSound("microbe-theme-1", "microbe-theme-1.ogg")
@@ -341,7 +355,7 @@ local function setupSound()
     soundSource:addSound("microbe-theme-7", "microbe-theme-7.ogg")   
     local ambientEntity2 = Entity("ambience2")
     local soundSource = SoundSourceComponent()
-    soundSource.volumeMultiplier = 0.3
+    soundSource.volumeMultiplier = 0.1
     soundSource.ambientSoundSource = true
     ambientSound = soundSource:addSound("microbe-ambient", "soundeffects/microbe-ambience.ogg")
     soundSource.autoLoop = true
@@ -404,6 +418,7 @@ local function createMicrobeStage(name)
             RenderSystem(),
             MembraneSystem(),
             CompoundCloudSystem(),
+            AgentCloudSystem(),
             -- Other
             SoundSourceSystem(),
             PowerupSystem(),

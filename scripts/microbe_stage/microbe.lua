@@ -249,16 +249,18 @@ function Microbe.createMicrobeEntity(name, aiControlled, speciesName)
     soundComponent:addSound("microbe-release-toxin", "soundeffects/microbe-release-toxin.ogg")
     soundComponent:addSound("microbe-toxin-damage", "soundeffects/microbe-toxin-damage.ogg")
     soundComponent:addSound("microbe-death", "soundeffects/microbe-death.ogg")
-    soundComponent:addSound("microbe-collision", "soundeffects/microbe-collision.ogg")
     soundComponent:addSound("microbe-pickup-organelle", "soundeffects/microbe-pickup-organelle.ogg")
+    local engulfSound = soundComponent:addSound("microbe-engulfment", "soundeffects/engulfment.ogg")
+ --   engulfSound.properties.loop = true
+    soundComponent:addSound("microbe-reproduction", "soundeffects/reproduction.ogg")
     s1 = soundComponent:addSound("microbe-movement-1", "soundeffects/microbe-movement-1.ogg")
-    s1.properties.volume = 1
+    s1.properties.volume = 0.4
     s1.properties:touch()
     s1 = soundComponent:addSound("microbe-movement-turn", "soundeffects/microbe-movement-2.ogg")
-    s1.properties.volume = 0.2
+    s1.properties.volume = 0
     s1.properties:touch()
     s1 = soundComponent:addSound("microbe-movement-2", "soundeffects/microbe-movement-3.ogg")
-    s1.properties.volume = 1
+    s1.properties.volume = 0.4
     s1.properties:touch()
     local components = {
         CompoundAbsorberComponent(),
@@ -556,14 +558,33 @@ function Microbe:emitAgent(compoundId, maxAmount)
         self.soundSource:playSound("microbe-release-toxin")
         -- Calculate the emission angle of the agent emitter
         local organelleX, organelleY = axialToCartesian(agentVacuole.position.q, agentVacuole.position.r)
-        local nucleusX, nucleusY = axialToCartesian(0, 0)
-        local deltaX = nucleusX - organelleX
-        local deltaY = nucleusY - organelleY
-        local angle =  math.atan2(-deltaY, -deltaX)
+        local membraneCoords = self.membraneComponent:getExternOrganellePos(organelleX, organelleY)
+        
+        local angle =  math.atan2(organelleY, organelleX)
         if (angle < 0) then
             angle = angle + 2*math.pi
         end
         angle = -(angle * 180/math.pi -90 ) % 360
+        --angle = angle * 180/math.pi
+        
+        -- Find the direction the microbe is facing
+        local yAxis = self.sceneNode.transform.orientation:yAxis()
+        local microbeAngle = math.atan2(yAxis.x, yAxis.y)
+        if (microbeAngle < 0) then
+            microbeAngle = microbeAngle + 2*math.pi
+        end
+        microbeAngle = microbeAngle * 180/math.pi
+        -- Take the microbe angle into account so we get world relative degrees
+        local finalAngle = (angle + microbeAngle) % 360        
+        
+        local s = math.sin(finalAngle/180*math.pi);
+        local c = math.cos(finalAngle/180*math.pi);
+
+        local xnew = -membraneCoords[1] * c + membraneCoords[2] * s;
+        local ynew = membraneCoords[1] * s + membraneCoords[2] * c;
+        
+        local direction = Vector3(xnew, ynew, 0)
+
         local amountToEject = math.min(maxAmount, agentVacuole.storedAmount)
         local particleCount = 1
         if amountToEject >= 3 then
@@ -572,7 +593,8 @@ function Microbe:emitAgent(compoundId, maxAmount)
         agentVacuole:takeCompound(compoundId, amountToEject)
         local i
         for i = 1, particleCount do
-            self:ejectCompound(compoundId, amountToEject/particleCount, angle,angle, INITIAL_EMISSION_RADIUS*4)
+            --self:ejectCompound(compoundId, amountToEject/particleCount, angle,angle, INITIAL_EMISSION_RADIUS*4)
+            createAgentCloud(compoundId, self.sceneNode.transform.position.x + xnew, self.sceneNode.transform.position.y + ynew, direction, amountToEject/particleCount)
         end
     end
 end
@@ -734,8 +756,8 @@ function Microbe:kill()
            organelle:removePhysics()
         end
     end
-    if self.microbe.hostileEngulfer then
-        self.microbe.hostileEngulfer.microbe.isCurrentlyEngulfing = false;
+    if self.microbe.wasBeingEngulfed then
+        self:removeEngulfedEffect()
     end
     microbeSceneNode.visible = false
 end
@@ -748,6 +770,7 @@ function Microbe:reproduce()
     copy:storeCompound(CompoundRegistry.getCompoundId("atp"), 20, false)
     copy.microbe:_resetCompoundPriorities()  
     copy.entity:addComponent(SpawnedComponent())
+    self.soundSource:playSound("microbe-reproduction")
     if self.microbe.isPlayerMicrobe then
         showReproductionDialog()
     end
@@ -758,7 +781,7 @@ function Microbe:toggleEngulfMode()
     colourToSet = ColourValue.Black
     if self.microbe.engulfMode then
         self.microbe.movementFactor = self.microbe.movementFactor * ENGULFING_MOVEMENT_DIVISION
-        
+        self.soundSource:stopSound("microbe-engulfment")
         self.rigidBody:reenableAllCollisions()
     else
         colourToSet = ColourValue.Red
@@ -769,6 +792,14 @@ function Microbe:toggleEngulfMode()
     -- below line is just an example—it doesn't actually work.
     -- microbe.membraneComponent.entity:flashColour(3000, ColourValue(1,0.2,0.2,1))
     self.microbe.engulfMode = not self.microbe.engulfMode
+end
+
+function Microbe:removeEngulfedEffect()
+    self.microbe.movementFactor = self.microbe.movementFactor * ENGULFED_MOVEMENT_DIVISION
+    self.microbe.wasBeingEngulfed = false
+    self.microbe.hostileEngulfer.microbe.isCurrentlyEngulfing = false;
+    self.microbe.hostileEngulfer.rigidBody:reenableAllCollisions()
+    self.microbe.hostileEngulfer.soundSource:stopSound("microbe-engulfment")
 end
 
 -- Sets the color of the microbe's membrane.
@@ -826,10 +857,7 @@ function Microbe:update(logicTime)
             self:damage(logicTime * 0.0005  * self.microbe.maxHitpoints) -- Engulfment damages 5% per second
         -- Else If we were but are no longer, being engulfed
         elseif self.microbe.wasBeingEngulfed then
-            self.microbe.movementFactor = self.microbe.movementFactor * ENGULFED_MOVEMENT_DIVISION
-            self.microbe.wasBeingEngulfed = false
-            self.microbe.hostileEngulfer.microbe.isCurrentlyEngulfing = false;
-            self.microbe.hostileEngulfer.rigidBody:reenableAllCollisions()
+            self:removeEngulfedEffect()
         end
         -- Used to detect when engulfing stops
         self.microbe.isBeingEngulfed = false;
@@ -1058,22 +1086,16 @@ function MicrobeSystem:update(renderTime, logicTime)
     for _, microbe in pairs(self.microbes) do
         microbe:update(logicTime)
     end
-    -- Note that this triggers every frame there is a collision, but the sound system ensures that the sound doesn't overlap itself. Could potentially be optimised
+    -- Note that this triggers every frame there is a collision
     for collision in self.microbeCollisions:collisions() do
         local entity1 = Entity(collision.entityId1)
         local entity2 = Entity(collision.entityId2)
         if entity1:exists() and entity2:exists() then
-            microbe.rigidBody.dynamicProperties.linearVelocity:length()
             local body1 = entity1:getComponent(RigidBodyComponent.TYPE_ID)
             local body2 = entity2:getComponent(RigidBodyComponent.TYPE_ID)
             local microbe1Comp = entity1:getComponent(MicrobeComponent.TYPE_ID)
             local microbe2Comp = entity2:getComponent(MicrobeComponent.TYPE_ID)
             if body1~=nil and body2~=nil then
-                -- Play bump sound
-                if ((body1.dynamicProperties.linearVelocity - body2.dynamicProperties.linearVelocity):length()) > RELATIVE_VELOCITY_TO_BUMP_SOUND then
-                    local soundComponent = entity1:getComponent(SoundSourceComponent.TYPE_ID)
-                    soundComponent:playSound("microbe-collision")
-                end
                 -- Engulf initiation
                 checkEngulfment(microbe1Comp, microbe2Comp, body1, entity1, entity2)
                 checkEngulfment(microbe2Comp, microbe1Comp, body2, entity2, entity1)
@@ -1084,13 +1106,26 @@ function MicrobeSystem:update(renderTime, logicTime)
 end
 
 function checkEngulfment(microbe1Comp, microbe2Comp, body, entity1, entity2)
-    if microbe1Comp.engulfMode and microbe1Comp.maxHitpoints > ENGULF_HP_RATIO_REQ*microbe2Comp.maxHitpoints 
-                   and not microbe2Comp.wasBeingEngulfed and not microbe1Comp.isCurrentlyEngulfing then
-        microbe2Comp.movementFactor = microbe2Comp.movementFactor / ENGULFED_MOVEMENT_DIVISION
-        microbe1Comp.isCurrentlyEngulfing = true
-        microbe2Comp.isBeingEngulfed = true
-        microbe2Comp.wasBeingEngulfed = true
-        microbe2Comp.hostileEngulfer = Microbe(entity1)
-        body:disableCollisionsWith(entity2.id)     
+    
+    
+    
+    if microbe1Comp.engulfMode and 
+       microbe1Comp.maxHitpoints > ENGULF_HP_RATIO_REQ*microbe2Comp.maxHitpoints and
+       microbe2Comp.dead == false then
+
+        if not microbe1Comp.isCurrentlyEngulfing then
+            --We have just started engulfing
+            microbe1Comp.isCurrentlyEngulfing = true
+            microbe2Comp.wasBeingEngulfed = true
+            microbeObj = Microbe(entity1)
+            microbe2Comp.hostileEngulfer = microbeObj
+            body:disableCollisionsWith(entity2.id)     
+            microbeObj.soundSource:playSound("microbe-engulfment")
+        end
+
+       --isBeingEngulfed is set to false every frame
+       -- we detect engulfment stopped by isBeingEngulfed being false while wasBeingEngulfed is true
+       microbe2Comp.isBeingEngulfed = true
+
     end
 end

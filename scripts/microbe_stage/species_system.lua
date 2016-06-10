@@ -125,11 +125,12 @@ Modify the species, using a microbe as the template for the new genome.
 
 ]]
 function SpeciesComponent:fromMicrobe(microbe)
-    local microbe = microbe.microbe -- shouldn't break, I think
-    self.name = microbe.speciesName
+    local microbe_ = microbe.microbe -- shouldn't break, I think
+    self.name = microbe_.speciesName
+    self.colour = microbe:getComponent(MembraneComponent.TYPE_ID):getColour()
     --print("self.name: "..self.name)
     -- Create species' organelle data
-    for i, organelle in pairs(microbe.organelles) do
+    for i, organelle in pairs(microbe_.organelles) do
         --print(i)
         local data = {}
         data.name = organelle.name

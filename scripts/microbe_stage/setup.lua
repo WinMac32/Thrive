@@ -131,7 +131,7 @@ end
 
 -- speciesName decides the template to use, while individualName is used for referencing the instance
 function microbeSpawnFunctionGeneric(pos, speciesName, aiControlled, individualName)
-    local microbe = Microbe.createMicrobeEntity(individualName, aiControlled)
+    local microbe = Microbe.createMicrobeEntity(individualName, aiControlled, speciesName)
     if pos ~= nil then
         microbe.rigidBody:setDynamicProperties(
             pos, -- Position
@@ -142,8 +142,8 @@ function microbeSpawnFunctionGeneric(pos, speciesName, aiControlled, individualN
     end
     -- set organelles, starting compound amounts, all that
     -- TODO: 
-    Entity(speciesName):getComponent(SpeciesComponent.TYPE_ID):template(microbe)
-    microbe.compoundBag:setProcessor(Entity(speciesName):getComponent(ProcessorComponent.TYPE_ID))
+    -- Entity(speciesName):getComponent(SpeciesComponent.TYPE_ID):template(microbe)
+    -- microbe.compoundBag:setProcessor(Entity(speciesName):getComponent(ProcessorComponent.TYPE_ID))
     return microbe
 end
 
@@ -332,11 +332,11 @@ local function setupPlayer()
     Engine:playerData():lockedMap():addLock("Toxin")
     Engine:playerData():lockedMap():addLock("chloroplast")
     Engine:playerData():setActiveCreature(microbe.entity.id, GameState.MICROBE)
-    speciesEntity = Entity("defaultMicrobeSpecies")
-    species = SpeciesComponent("Default")
-    species:fromMicrobe(microbe)
-    speciesEntity:addComponent(species)
-    microbe.microbe.speciesName = "Default"
+    -- speciesEntity = Entity("defaultMicrobeSpecies")
+    -- species = SpeciesComponent("Default")
+    -- species:fromMicrobe(microbe)
+    -- speciesEntity:addComponent(species)
+    --microbe.microbe.speciesName = "Default"
 end
 
 local function setupSound()

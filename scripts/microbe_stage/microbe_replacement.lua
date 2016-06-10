@@ -18,19 +18,30 @@ function MicrobeReplacementSystem:activate()
     if Engine:playerData():isBoolSet("edited_microbe") then
         Engine:playerData():setBool("edited_microbe", false)
 
-        workingMicrobe = Microbe(Entity(activeCreatureId, GameState.MICROBE_EDITOR))
+        workingMicrobe = Microbe(Entity(activeCreatureId, GameState.MICROBE_EDITOR), true)
 
-        speciesEntity = Entity(workingMicrobe.microbe.speciesName, GameState.MICROBE)
-        species = SpeciesComponent(workingMicrobe.microbe.speciesName)
-        speciesEntity:addComponent(species)
+        new_species_name = workingMicrobe.microbe.speciesName .. self.globalSpeciesNameCounter
         self.globalSpeciesNameCounter = self.globalSpeciesNameCounter + 1
-        species:fromMicrobe(workingMicrobe)
-        species.colour = workingMicrobe:getComponent(MembraneComponent.TYPE_ID):getColour()
+        print("NEW SPECIES: "..new_species_name)
 
+        speciesEntity = Entity(new_species_name, GameState.MICROBE)
+        species = SpeciesComponent(new_species_name)
+        speciesEntity:addComponent(species)
+        processorComponent = ProcessorComponent()
+        speciesEntity:addComponent(processorComponent)
+        for compoundID in CompoundRegistry.getCompoundList() do
+            processorComponent:setThreshold(compoundID, 10, 50) -- we currently just generate a new processor for the new species
+        end
+        species:fromMicrobe(workingMicrobe)
+        -- below folded into :fromMicrobe()
+        -- species.colour = workingMicrobe:getComponent(MembraneComponent.TYPE_ID):getColour()
+
+        newMicrobe = Microbe.createMicrobeEntity(PLAYER_NAME, false, new_species_name)
         workingMicrobe.entity:destroy()
 
-        newMicrobe = Microbe.createMicrobeEntity(PLAYER_NAME, false, workingMicrobe.microbe.speciesName)
-        species:template(newMicrobe)
+        -- species:template(newMicrobe)
+        -- newMicrobe.compoundBag:setProcessor(Entity(workingMicrobe.microbe.speciesName):getComponent(ProcessorComponent.TYPE_ID))
+        -- newMicrobe.compoundBag:setProcessor(processorComponent)
 
         if newMicrobe:getCompoundAmount(CompoundRegistry.getCompoundId("atp")) < 10 then
             newMicrobe:storeCompound(CompoundRegistry.getCompoundId("atp"), 10)

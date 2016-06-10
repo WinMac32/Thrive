@@ -184,12 +184,14 @@ function MicrobeComponent:storage()
     storage:set("speciesName", self.speciesName)
     local storedCompounds = StorageList()
     for compoundId in CompoundRegistry.getCompoundList() do
+        --[[
         if self:getCompoundAmount(compoundId) > 0 then
             compound = StorageContainer()
             compound:set("compoundId", compoundId)
             compound:set("amount", amount)
             storedCompounds:append(compound)
         end
+        --]]
     end
     storage:set("storedCompounds", storedCompounds)
     local compoundPriorities = StorageList()
@@ -262,6 +264,7 @@ function Microbe.createMicrobeEntity(name, aiControlled, speciesName)
     s1 = soundComponent:addSound("microbe-movement-2", "soundeffects/microbe-movement-3.ogg")
     s1.properties.volume = 0.4
     s1.properties:touch()
+
     local components = {
         CompoundAbsorberComponent(),
         OgreSceneNodeComponent(),
@@ -305,7 +308,7 @@ Microbe.COMPONENTS = {
 --
 -- @param entity
 -- The entity this microbe wraps
-function Microbe:__init(entity)
+function Microbe:__init(entity, in_editor)
     self.entity = entity
     for key, typeId in pairs(Microbe.COMPONENTS) do
         local component = entity:getComponent(typeId)
@@ -320,6 +323,10 @@ function Microbe:__init(entity)
     end
     self:_updateCompoundAbsorber()
     self.playerAlreadyShownAtpDamage = false
+    if not in_editor then
+        self.compoundBag:setProcessor(Entity(self.microbe.speciesName):getComponent(ProcessorComponent.TYPE_ID))
+        self:getSpeciesComponent():template(self)
+    end
 end
 
 -- Getter for microbe species
@@ -764,7 +771,7 @@ end
 
 -- Copies this microbe. The new microbe will not have the stored compounds of this one.
 function Microbe:reproduce()
-    copy = Microbe.createMicrobeEntity(nil, true)
+    copy = Microbe.createMicrobeEntity(nil, true, self.microbe.speciesName)
     self:getSpeciesComponent():template(copy)
     copy.compoundBag:setProcessor(Entity(self.microbe.speciesName):getComponent(ProcessorComponent.TYPE_ID))
     copy.rigidBody.dynamicProperties.position = Vector3(self.rigidBody.dynamicProperties.position.x, self.rigidBody.dynamicProperties.position.y, 0)
@@ -846,7 +853,10 @@ function Microbe:update(logicTime)
         -- Other organelles
         for _, organelle in pairs(self.microbe.organelles) do
             organelle:update(self, logicTime)
+            -- print("updated organelle")
         end
+        -- print("updated all organelles")
+
         if self.microbe.engulfMode then
             -- Drain atp and if we run out then disable engulfmode
             local cost = ENGULFING_ATP_COST_SECOND/1000*logicTime
@@ -883,6 +893,7 @@ function Microbe:update(logicTime)
             self.membraneComponent:sendOrganelles(x, y)
         end
     end
+    -- print("finished update")
 end
 
 function Microbe:purgeCompounds()
@@ -935,10 +946,12 @@ end
 
 function Microbe:attemptReproduce()
     -- Split microbe if it has enough reproductase
+    print("reproducting")
     if self:getCompoundAmount(CompoundRegistry.getCompoundId("reproductase")) > REPRODUCTASE_TO_SPLIT then
         self:takeCompound(CompoundRegistry.getCompoundId("reproductase"), REPRODUCTASE_TO_SPLIT)
         self:reproduce()
     end
+    print("reproducted")
 end
 
 function Microbe:respawn()

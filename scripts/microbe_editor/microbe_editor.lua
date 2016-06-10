@@ -55,7 +55,7 @@ function MicrobeEditor:activate()
         cytoplasm:destroy()
     end
     
-    self.currentMicrobe = Microbe(self.nextMicrobeEntity)
+    self.currentMicrobe = Microbe(self.nextMicrobeEntity, true)
     self.currentMicrobe.sceneNode.transform.orientation = Quaternion(Radian(Degree(0)), Vector3(0, 0, 1))-- Orientation
     self.currentMicrobe.sceneNode.transform.position = Vector3(0, 0, 0)
     self.currentMicrobe.sceneNode.transform:touch()
@@ -408,7 +408,7 @@ function MicrobeEditor:loadMicrobe(entityId)
     if self.currentMicrobe ~= nil then
         self.currentMicrobe.entity:destroy()
     end
-    self.currentMicrobe = Microbe(Entity(entityId))
+    self.currentMicrobe = Microbe(Entity(entityId), true)
     self.currentMicrobe.entity:stealName("working_microbe")
     self.currentMicrobe.sceneNode.transform.orientation = Quaternion(Radian(Degree(0)), Vector3(0, 0, 1))-- Orientation
     self.currentMicrobe.sceneNode.transform:touch()

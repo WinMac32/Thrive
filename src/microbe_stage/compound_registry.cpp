@@ -105,7 +105,7 @@ CompoundRegistry::loadFromLua(
         float weight = luabind::object_cast<float>(data["weight"]);
         std::string meshname = luabind::object_cast<std::string>(data["mesh"]);
         float size = luabind::object_cast<float>(data["size"]);
-        std::cerr << "before casting effect" << std::endl;
+        // std::cerr << "before casting effect" << std::endl;
         luabind::object effect = data["effect"];
         registerAgentType(
                 key,
@@ -128,7 +128,7 @@ CompoundRegistry::loadAgentFromLua(
     float weight = luabind::object_cast<float>(data["weight"]);
     std::string meshname = luabind::object_cast<std::string>(data["mesh"]);
     float size = luabind::object_cast<float>(data["size"]);
-    std::cerr << "before casting effect" << std::endl;
+    // std::cerr << "before casting effect" << std::endl;
     luabind::object effect = data["effect"];
     registerAgentType(
             internal_name,
